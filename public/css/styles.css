@@ -1,0 +1,281 @@
+/* ===== Base Styling ===== */
+body {
+  background-image: linear-gradient(to left top, #cc33ff, #fb4eda, #ff78c2, #ffa4bc, #ffcccc);
+  font-family: "Fredoka", sans-serif;
+  background-attachment: fixed;
+  margin: 0;
+  padding-bottom: 3rem;
+  min-height: 100%;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.intro-title {
+  font-family: "Great Vibes", cursive;
+  margin: 3rem 1rem 1rem 1rem;
+  font-size: 3rem;
+}
+
+.intro-line {
+  font-family: "Dancing Script", cursive;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.btn-upload {
+  border-radius: 25px;
+  font-size: 1rem;
+  padding: 0.6rem 1.2rem;
+  margin-top: 10px;
+}
+
+.home-icon {
+  text-align: left;
+  margin: 2rem;
+  font-size: 2rem;
+}
+
+/* ===== Card Styling (Home Page Cards) ===== */
+.card-f {
+  width: 100%;            
+  padding: 20px;
+  border-radius: 20px;
+  margin: 0 auto;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  background-image: linear-gradient(
+    to right bottom,
+    #cc33ff,
+    #fb4eda,
+    #ff78c2,
+    #ffa4bc,
+    #ffcccc
+  );
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.card-f:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.card-title {
+  font-size: 1.25rem;
+}
+
+.card-text {
+  font-size: 0.95rem;
+}
+
+.card-body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.file-name {
+  font-size: 0.85rem;
+  color: #000;
+  margin-top: 10px;
+}
+
+.open-btn {
+  border-radius: 15px;
+  background-color: #cc33ff;
+  font-size: 0.95rem;
+}
+
+/* ===== Footer ===== */
+footer {
+  position: relative;
+  text-align: center;
+  padding: 1rem;
+  color: white;
+  font-size: 0.95rem;
+}
+
+/* ===== Links ===== */
+.box-a {
+  text-decoration: none;
+  color: black;
+}
+
+.box-a:hover {
+  color: rgb(239, 245, 186);
+}
+
+/* ===== Single Post Page Styling ===== */
+#post-container {
+  max-width: 700px;
+  margin: 3rem auto;
+  padding: 2.5rem;
+  background: linear-gradient(to right top, #fce4ec, #f8bbd0, #f48fb1);
+  border-radius: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  color: #212529;
+  text-align: center;
+}
+
+.post-h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #6a1b9a;
+  margin-bottom: 1.5rem;
+  font-family: "Fredoka", sans-serif;
+}
+
+.post-desc {
+  font-size: 1.05rem;
+  line-height: 1.8;
+  margin-bottom: 2rem;
+  color: #333;
+  padding: 0 1rem;
+  text-align: justify;
+}
+
+/* ===== Post Buttons ===== */
+.view-btn,
+.download-btn,
+.edit-btn,
+.delete-btn {
+  margin: 0.5rem;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.95rem;
+  border-radius: 10px;
+  transition: 0.3s;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.view-btn:hover {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.download-btn:hover {
+  background-color: #198754;
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.view-btn i,
+.download-btn i,
+.edit-btn i,
+.delete-btn i {
+  margin-right: 6px;
+}
+
+.edit,
+.delete {
+  display: inline-block;
+}
+
+/* ===== File Previews ===== */
+.file-preview {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.preview-img {
+  max-width: 100%;
+  max-height: 500px;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.preview-frame {
+  width: 100%;
+  height: 500px;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+/* ===== Responsive Media Queries ===== */
+@media (max-width: 991px) {
+  .intro-title {
+    font-size: 2.5rem;
+  }
+
+  .intro-line {
+    font-size: 1.1rem;
+  }
+
+  .btn-upload {
+    font-size: 0.95rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+  }
+
+  .card-text {
+    font-size: 0.9rem;
+  }
+
+  .card-f {
+    padding: 15px;
+  }
+
+  .post-h1 {
+    font-size: 1.8rem;
+  }
+
+  .post-desc {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .intro-title {
+    font-size: 2rem;
+  }
+
+  .intro-line {
+    font-size: 1rem;
+  }
+
+  .home-icon {
+    text-align: center;
+    font-size: 1.5rem;
+  }
+
+  .btn-upload {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.8rem;
+  }
+
+  .card-title {
+    font-size: 1rem;
+  }
+
+  .card-text,
+  .file-name {
+    font-size: 0.85rem;
+  }
+
+  .post-h1 {
+    font-size: 1.6rem;
+  }
+
+  .post-desc {
+    font-size: 0.95rem;
+    padding: 0 0.5rem;
+  }
+
+  footer {
+    font-size: 0.85rem;
+  }
+}
