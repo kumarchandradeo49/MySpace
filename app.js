@@ -1,135 +1,121 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const ejs = require("ejs");
-const http = require("http");
-const _ = require("lodash");
-const multer = require("multer");
-require("dotenv").config();
-const mongoose = require("mongoose");
-const res = require("express/lib/response");
+require('dotenv').config(); // Load environment variables
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const _ = require('lodash');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
 const app = express();
 
-app.set("view engine", "ejs");
+// Connect to MongoDB Atlas using env variable
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log("✅ MongoDB Atlas connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
+// Set view engine and static files
+app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
-// console.log(process.env);
-mongoose.connect(process.env.MONGOD_URL);
-//storage for the upload
-const storage = multer.diskStorage({
-  destination: function (req, file, callback) {
-    callback(null, "./public/uploads/files");
-  },
-  filename: function (request, file, callback) {
-    callback(null, Date.now() + file.originalname);
-  },
-});
-// upload parameter for multer
-const upload = multer({
-  storage: storage,
-  limits: {
-    fieldSize: 1024 * 1024 * 3,
-  },
-});
 
-const postSchema = {
+// Set up storage for uploaded files
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "public/uploads/files");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage: storage });
+
+// Define schema and model
+const postSchema = new mongoose.Schema({
   title: String,
   content: String,
-  file: String,
-};
-
+  file: String
+});
 const Post = mongoose.model("Post", postSchema);
 
-app.get("/", function (req, res) {
-  Post.find({}, function (err, foundPosts) {
-    if (err) {
-      console.log(err);
-    } else {
-      res.render("home", {
-        posts: foundPosts,
-      });
-    }
-  });
+// Routes
+app.get("/", (req, res) => {
+  Post.find({})
+    .then(posts => {
+      res.render("home", { posts: posts });
+    })
+    .catch(err => res.send(err));
 });
 
-app.get("/compose", function (req, res) {
+app.get("/compose", (req, res) => {
   res.render("compose");
 });
 
-// Create Post
-app.post("/compose", upload.single("myfile"), function (req, res) {
+app.post("/compose", upload.single("uploaded_file"), (req, res) => {
   const post = new Post({
-    title: req.body.postTitle,
-    content: req.body.blog,
-    file: req.file.filename,
+    title: req.body.post_title,
+    content: req.body.post_body,
+    file: req.file ? req.file.filename : ""
   });
-  post.save(function (err) {
-    if (!err) {
-      res.redirect("/");
-    }
-  });
+  post.save()
+    .then(() => res.redirect("/"))
+    .catch(err => res.send(err));
 });
 
-// Read Post
-app.get("/posts/:postId", function (req, res) {
-  let requestedPostId = req.params.postId;
-  Post.findOne({ _id: requestedPostId }, function (err, post) {
-    res.render("post", {
-      title: post.title,
-      content: post.content,
-      postId: post._id,
-      file: post.file,
-    });
-  });
+app.get("/posts/:postId", (req, res) => {
+  const requestedId = req.params.postId;
+  Post.findById(requestedId)
+    .then(post => {
+      res.render("post", {
+        title: post.title,
+        content: post.content,
+        file: post.file,
+        postId: post._id
+      });
+    })
+    .catch(err => res.send(err));
 });
 
-//For Editing the post
-app.get("/posts/:postId/edit", (req, res) => {
-  Post.findById(req.params.postId, (err, post) => {
-    if (err) {
-      console.log(err);
-    } else {
-      res.render("edit", { post: post });
-    }
-  });
+app.get("/uploads/files/:filename", (req, res) => {
+  const filePath = path.join(__dirname, "public", "uploads", "files", req.params.filename);
+  res.sendFile(filePath);
 });
-app.post("/posts/:postId/edit", upload.single("myfile"), (req, res) => {
-  Post.findByIdAndUpdate(
-    req.params.postId,
-    {
-      $set: {
-        title: req.body.title,
-        content: req.body.content,
-        file: req.file.filename,
-      },
-    },
-    (err, update) => {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log("Post Updated");
-        res.redirect("/");
+
+app.post("/posts/:postId/delete", (req, res) => {
+  Post.findByIdAndDelete(req.params.postId)
+    .then(deleted => {
+      if (deleted.file) {
+        fs.unlinkSync(path.join(__dirname, "public", "uploads", "files", deleted.file));
       }
-    }
-  );
+      res.redirect("/");
+    })
+    .catch(err => res.send(err));
 });
 
-//For Deleting the post
-app.post("/posts/:postId/delete", function (req, res) {
-  Post.deleteOne({ _id: req.params.postId }, function (err) {
-    if (err) {
-      res.send(err);
-    } else {
-      console.log("SuccesFully Deleted this Post");
-      res.redirect("/");
-    }
-  });
+app.get("/posts/:postId/edit", (req, res) => {
+  Post.findById(req.params.postId)
+    .then(post => {
+      res.render("edit", {
+        postId: post._id,
+        title: post.title,
+        content: post.content
+      });
+    })
+    .catch(err => res.send(err));
 });
-//Listening the port Locally or heroku
-let port = process.env.PORT;
-if (port == null || port == "") {
-  port = 3000;
-}
+
+app.post("/posts/:postId/edit", (req, res) => {
+  Post.findByIdAndUpdate(req.params.postId, {
+    title: req.body.post_title,
+    content: req.body.post_body
+  })
+    .then(() => res.redirect("/posts/" + req.params.postId))
+    .catch(err => res.send(err));
+});
+
+// Start server on dynamic port
+const port = process.env.PORT || 3000;
 app.listen(port, function () {
-  console.log("Server started successfully");
+  console.log("🚀 Server started on port " + port);
 });
