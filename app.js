@@ -79,7 +79,14 @@ app.get("/posts/:postId", (req, res) => {
 
 app.get("/uploads/files/:filename", (req, res) => {
   const filePath = path.join(__dirname, "public", "uploads", "files", req.params.filename);
-  res.sendFile(filePath);
+  
+  fs.access(filePath, fs.constants.F_OK, (err) => {
+    if (err) {
+      console.error("File not found:", filePath);
+      return res.status(404).send("File not found.");
+    }
+    res.sendFile(filePath);
+  });
 });
 
 app.post("/posts/:postId/delete", (req, res) => {
