@@ -52,10 +52,10 @@ app.get("/compose", (req, res) => {
   res.render("compose");
 });
 
-app.post("/compose", upload.single("uploaded_file"), (req, res) => {
+app.post("/compose", upload.single("myfile"), (req, res) => {
   const post = new Post({
-    title: req.body.post_title,
-    content: req.body.post_body,
+    title: req.body.postTitle,
+    content: req.body.blog,
     file: req.file ? req.file.filename : ""
   });
   post.save()
@@ -79,7 +79,6 @@ app.get("/posts/:postId", (req, res) => {
 
 app.get("/uploads/files/:filename", (req, res) => {
   const filePath = path.join(__dirname, "public", "uploads", "files", req.params.filename);
-  
   fs.access(filePath, fs.constants.F_OK, (err) => {
     if (err) {
       console.error("File not found:", filePath);
@@ -106,17 +105,30 @@ app.get("/posts/:postId/edit", (req, res) => {
       res.render("edit", {
         postId: post._id,
         title: post.title,
-        content: post.content
+        content: post.content,
+        file: post.file, // ✅ Add this line to fix the `file is not defined` error
       });
     })
     .catch(err => res.send(err));
 });
 
-app.post("/posts/:postId/edit", (req, res) => {
-  Post.findByIdAndUpdate(req.params.postId, {
-    title: req.body.post_title,
-    content: req.body.post_body
-  })
+app.post("/posts/:postId/edit", upload.single("myfile"), (req, res) => {
+  Post.findById(req.params.postId)
+    .then(post => {
+      // Delete old file if new one is uploaded
+      if (req.file && post.file) {
+        const oldPath = path.join(__dirname, "public", "uploads", "files", post.file);
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+
+      post.title = req.body.title;
+      post.content = req.body.content;
+      if (req.file) post.file = req.file.filename;
+
+      return post.save();
+    })
     .then(() => res.redirect("/posts/" + req.params.postId))
     .catch(err => res.send(err));
 });
