@@ -1,37 +1,32 @@
-require('dotenv').config(); // Load environment variables
+require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const _ = require('lodash');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
 const app = express();
 
-// Connect to MongoDB Atlas using env variable
+// MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log("✅ MongoDB Atlas connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Set view engine and static files
+// Middleware & Static Files
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-// Set up storage for uploaded files
+// Multer Storage
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/uploads/files");
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
+  destination: (req, file, cb) => cb(null, "public/uploads/files"),
+  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
-const upload = multer({ storage: storage });
+const upload = multer({ storage });
 
-// Define schema and model
+// Mongoose Schema
 const postSchema = new mongoose.Schema({
   title: String,
   content: String,
@@ -40,32 +35,31 @@ const postSchema = new mongoose.Schema({
 const Post = mongoose.model("Post", postSchema);
 
 // Routes
+
+// Home
 app.get("/", (req, res) => {
-  Post.find({})
-    .then(posts => {
-      res.render("home", { posts: posts });
-    })
-    .catch(err => res.send(err));
+  Post.find()
+    .then(posts => res.render("home", { posts }))
+    .catch(err => res.status(500).send(err));
 });
 
-app.get("/compose", (req, res) => {
-  res.render("compose");
-});
+// Compose
+app.get("/compose", (req, res) => res.render("compose"));
 
-app.post("/compose", upload.single("myfile"), (req, res) => {
+app.post("/compose", upload.single("uploaded_file"), (req, res) => {
   const post = new Post({
-    title: req.body.postTitle,
-    content: req.body.blog,
+    title: req.body.post_title,
+    content: req.body.post_body,
     file: req.file ? req.file.filename : ""
   });
   post.save()
     .then(() => res.redirect("/"))
-    .catch(err => res.send(err));
+    .catch(err => res.status(500).send(err));
 });
 
+// View Post
 app.get("/posts/:postId", (req, res) => {
-  const requestedId = req.params.postId;
-  Post.findById(requestedId)
+  Post.findById(req.params.postId)
     .then(post => {
       res.render("post", {
         title: post.title,
@@ -74,31 +68,10 @@ app.get("/posts/:postId", (req, res) => {
         postId: post._id
       });
     })
-    .catch(err => res.send(err));
+    .catch(err => res.status(500).send(err));
 });
 
-app.get("/uploads/files/:filename", (req, res) => {
-  const filePath = path.join(__dirname, "public", "uploads", "files", req.params.filename);
-  fs.access(filePath, fs.constants.F_OK, (err) => {
-    if (err) {
-      console.error("File not found:", filePath);
-      return res.status(404).send("File not found.");
-    }
-    res.sendFile(filePath);
-  });
-});
-
-app.post("/posts/:postId/delete", (req, res) => {
-  Post.findByIdAndDelete(req.params.postId)
-    .then(deleted => {
-      if (deleted.file) {
-        fs.unlinkSync(path.join(__dirname, "public", "uploads", "files", deleted.file));
-      }
-      res.redirect("/");
-    })
-    .catch(err => res.send(err));
-});
-
+// Edit Post
 app.get("/posts/:postId/edit", (req, res) => {
   Post.findById(req.params.postId)
     .then(post => {
@@ -106,35 +79,50 @@ app.get("/posts/:postId/edit", (req, res) => {
         postId: post._id,
         title: post.title,
         content: post.content,
-        file: post.file, // ✅ Add this line to fix the `file is not defined` error
+        file: post.file
       });
     })
-    .catch(err => res.send(err));
+    .catch(err => res.status(500).send(err));
 });
 
 app.post("/posts/:postId/edit", upload.single("myfile"), (req, res) => {
   Post.findById(req.params.postId)
     .then(post => {
-      // Delete old file if new one is uploaded
       if (req.file && post.file) {
-        const oldPath = path.join(__dirname, "public", "uploads", "files", post.file);
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
+        const oldFile = path.join(__dirname, "public", "uploads", "files", post.file);
+        if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
+        post.file = req.file.filename;
       }
-
-      post.title = req.body.title;
-      post.content = req.body.content;
-      if (req.file) post.file = req.file.filename;
-
+      post.title = req.body.post_title;
+      post.content = req.body.post_body;
       return post.save();
     })
     .then(() => res.redirect("/posts/" + req.params.postId))
-    .catch(err => res.send(err));
+    .catch(err => res.status(500).send(err));
 });
 
-// Start server on dynamic port
-const port = process.env.PORT || 3000;
-app.listen(port, function () {
-  console.log("🚀 Server started on port " + port);
+// Delete Post
+app.post("/posts/:postId/delete", (req, res) => {
+  Post.findByIdAndDelete(req.params.postId)
+    .then(deleted => {
+      if (deleted?.file) {
+        const filePath = path.join(__dirname, "public/uploads/files", deleted.file);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      }
+      res.redirect("/");
+    })
+    .catch(err => res.status(500).send(err));
 });
+
+// Serve Uploaded Files
+app.get("/uploads/files/:filename", (req, res) => {
+  const filePath = path.join(__dirname, "public/uploads/files", req.params.filename);
+  fs.access(filePath, fs.constants.F_OK, err => {
+    if (err) return res.status(404).send("File not found.");
+    res.sendFile(filePath);
+  });
+});
+
+// Start Server
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log("🚀 Server started on port " + port));

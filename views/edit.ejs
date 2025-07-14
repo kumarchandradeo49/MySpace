@@ -6,17 +6,14 @@
   <form action="/posts/<%= postId %>/edit" method="POST" enctype="multipart/form-data">
     <div class="mb-3">
       <label for="post-title" class="form-label">Title</label>
-      <input class="form-control" id="post-title" name="post_title" type="text" placeholder="Input title" required
-        autocomplete="off" value="<%= title %>">
+      <input class="form-control" id="post-title" name="post_title" type="text" required autocomplete="off" value="<%= title %>">
     </div>
 
     <div class="mb-3">
       <label for="postcontent" class="form-label">Description</label>
-      <textarea class="form-control" id="postcontent" name="post_body" rows="4" required
-        placeholder="Add some description about the file..."><%= content %></textarea>
+      <textarea class="form-control" id="postcontent" name="post_body" rows="4" required><%= content %></textarea>
     </div>
 
-    <!-- Optional file re-upload field -->
     <div class="mb-3">
       <label for="myfile" class="form-label">Replace file (optional):</label>
       <input type="file" id="myfile" name="myfile" class="form-control">

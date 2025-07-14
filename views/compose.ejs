@@ -5,22 +5,20 @@
   <form action="/compose" method="post" enctype="multipart/form-data">
     <div class="mb-3">
       <label for="post-title">Title</label>
-      <input class="form-control" id="post-title" name="post_title" type="text" placeholder="Input title" required autocomplete="off">
+      <input class="form-control" id="post-title" name="post_title" type="text" required autocomplete="off">
     </div>
 
     <div class="mb-3">
       <label for="postcontent">Post</label>
-      <textarea class="form-control text-area" id="postcontent" name="post_body" rows="4" cols="40" required
-        placeholder="Add Some Description about the File ..............."></textarea>
+      <textarea class="form-control text-area" id="postcontent" name="post_body" rows="4" required></textarea>
     </div>
 
     <div class="mb-3">
       <label for="uploaded_file">Select a file:</label>
       <input type="file" id="uploaded_file" name="uploaded_file">
-      <!-- ✅ Name matches Multer field -->
     </div>
 
-    <button class="btn btn-primary publish-btn" type="submit">Publish</button>
+    <button class="btn btn-primary" type="submit">Publish</button>
   </form>
 </div>
 
