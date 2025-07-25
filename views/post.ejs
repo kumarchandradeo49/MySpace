@@ -4,34 +4,60 @@
   <h1 class="post-h1"><%= title %></h1>
   <p class="post-desc"><%= content %></p>
 
-  <% const ext = file.split('.').pop().toLowerCase(); %>
+  <% var ext = ""; if (typeof file === "string" && file.includes(".")) { ext =
+  file.split('.').pop().toLowerCase(); } %>
+
   <div class="file-preview mt-4">
-    <% if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) { %>
-      <img src="/uploads/files/<%= file %>" alt="Image" class="preview-img" />
-    <% } else if (['pdf'].includes(ext)) { %>
-      <iframe src="/uploads/files/<%= file %>" class="preview-frame" frameborder="0"></iframe>
+    <% if (file) { var ext = file.split('.').pop().toLowerCase(); %> <% if
+    (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].includes(ext)) { %>
+    <img src="/uploads/files/<%= file %>" alt="Image" class="preview-img" />
+
+    <% } else if (ext === 'pdf') { %>
+    <iframe
+      src="/uploads/files/<%= file %>"
+      class="preview-frame"
+      frameborder="0"
+    ></iframe>
+
     <% } else { %>
-      <a href="/uploads/files/<%= file %>" target="_blank" class="btn btn-info view-btn">
-        <i class="bi bi-eye"></i> View File
-      </a>
+    <p>Preview not available. You can download the file below.</p>
+    <% } %> <% } else { %>
+    <p>No file uploaded for this post.</p>
     <% } %>
   </div>
 
-  <a href="/uploads/files/<%= file %>" download class="btn btn-success download-btn">
+  <% if (file) { %>
+  <a
+    href="/uploads/download/<%= file %>"
+    class="btn btn-success download-btn mt-3"
+  >
     <i class="bi bi-download"></i> Download
   </a>
-
-  <form class="edit d-inline-block" action="/posts/<%= postId %>/edit" method="get">
+  <% } %> <% if (user) { %>
+  <form
+    class="edit d-inline-block mt-3"
+    action="/posts/<%= postId %>/edit"
+    method="get"
+  >
     <button class="btn btn-primary edit-btn" type="submit">
       <i class="bi bi-pencil-square"></i> Edit
     </button>
   </form>
 
-  <form class="delete d-inline-block" action="/posts/<%= postId %>/delete" method="POST">
-    <button class="btn btn-danger delete-btn" type="submit">
+  <form
+    class="delete d-inline-block mt-3"
+    action="/posts/<%= postId %>/delete"
+    method="POST"
+  >
+    <button
+      class="btn btn-danger delete-btn"
+      type="submit"
+      onclick="return confirm('Are you sure you want to delete this post?')"
+    >
       <i class="bi bi-trash"></i> Delete
     </button>
   </form>
+  <% } %>
 </div>
 
 <%- include('partials/footer'); -%>
