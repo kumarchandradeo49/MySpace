@@ -14,43 +14,43 @@ const LocalStrategy = require('passport-local').Strategy;
 
 const app = express();
 
-// MongoDB Connection
+
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log("✅ MongoDB Atlas connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Middleware & Static Files
+
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-// Express Session
+
 app.use(session({
   secret: 'yourSecretKey',
   resave: false,
   saveUninitialized: false
 }));
 
-// Passport Config
+
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// Make user available in all EJS views
+
 app.use((req, res, next) => {
   res.locals.user = req.user;
   next();
 });
 
-// Middleware to protect routes
+
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) return next();
   res.redirect('/login');
 }
 
-// ========== Auth Routes ==========
+// Auth Routes
 
 app.get('/register', (req, res) => {
   res.render('register');
@@ -83,7 +83,7 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// ========== File Upload Setup ==========
+//  File Upload Setup 
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "public/uploads/files"),
@@ -91,7 +91,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// ========== Post Schema ==========
+// Post Schema
 
 const postSchema = new mongoose.Schema({
   title: String,
@@ -104,9 +104,8 @@ const postSchema = new mongoose.Schema({
 });
 const Post = mongoose.model("Post", postSchema);
 
-// ========== Routes ==========
-
-// ✅ Public Homepage
+//  Routes 
+//  Public Homepage
 app.get("/", (req, res) => {
   if (!req.user) {
     return res.render("home", { posts: [], user: null });
@@ -150,7 +149,6 @@ app.get("/posts/:postId", isLoggedIn, (req, res) => {
     .catch(err => res.status(500).send(err));
 });
 
-// Edit Post
 app.get("/posts/:postId/edit", isLoggedIn, (req, res) => {
   Post.findById(req.params.postId)
     .then(post => {
@@ -185,7 +183,6 @@ app.post("/posts/:postId/edit", isLoggedIn, upload.single("myfile"), (req, res) 
     .catch(err => res.status(500).send(err));
 });
 
-// Delete Post
 app.post("/posts/:postId/delete", isLoggedIn, (req, res) => {
   Post.findById(req.params.postId)
     .then(post => {
@@ -202,7 +199,7 @@ app.post("/posts/:postId/delete", isLoggedIn, (req, res) => {
     .catch(err => res.status(500).send(err));
 });
 
-// ✅ View File in Browser
+//  View File in Browser
 app.get("/uploads/view/:filename", (req, res) => {
   const filePath = path.join(__dirname, "public/uploads/files", req.params.filename);
   fs.access(filePath, fs.constants.F_OK, (err) => {
@@ -211,7 +208,7 @@ app.get("/uploads/view/:filename", (req, res) => {
   });
 });
 
-// ✅ Download File
+//  Download File
 app.get("/uploads/download/:filename", (req, res) => {
   const filePath = path.join(__dirname, "public/uploads/files", req.params.filename);
   fs.access(filePath, fs.constants.F_OK, (err) => {
@@ -220,6 +217,5 @@ app.get("/uploads/download/:filename", (req, res) => {
   });
 });
 
-// Start Server
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log("🚀 Server started on port " + port));
