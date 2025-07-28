@@ -95,11 +95,15 @@ Base URL: `https://myspace-fbg4.onrender.com`
 • Fields: Email, Password
 • Automatically logs user in after registration
 
+---
+
 ## `/login` (Login Page)
 
 ![Login](./sample_pictures/login-page.png)
 • Login form for existing users
 • Session maintained until logout
+
+---
 
 ## `/compose` (Upload Page)
 
@@ -127,19 +131,10 @@ content: req.body.post_body,
 file: req.file.filename
 }
 
+---
 
-/ (Home Page)
 
-Displays only the logged-in user’s uploaded files
-
-	•	If not logged in → shows an empty state
-	•	If logged in → shows cards of your files
-
-    <% posts.forEach(post => { %>
-  <%= post.title %> - <%= post.file %>
-<% }) %>
-
-/posts/:id (View Page)
+## /posts/:id (View Page)
 ![user-files](./sample_pictures/dashboard-user-files.png)
 
 > Displays a specific uploaded post (file).
@@ -167,7 +162,9 @@ View a single uploaded post
   postId: post._id
 });
 
-/posts/:id/edit (Edit Page)
+---
+
+##/posts/:id/edit (Edit Page)
 
 > Lets users update their previously uploaded post.
 
@@ -190,7 +187,9 @@ Allows users to update post info or file
   file: req.file.filename
 }
 
-/posts/:id/delete (Delete)
+---
+
+## /posts/:id/delete (Delete)
 
 > Permanently deletes the post and its associated file.
 
@@ -202,22 +201,29 @@ Allows users to update post info or file
 
 Post.findByIdAndDelete(req.params.postId)
 
-/uploads/download/:filename
+---
+
+##/uploads/download/:filename
 
 Forces file download using:
 res.download(filePath);
 
-/uploads/view/:filename
+---
+
+##/uploads/view/:filename
 
 Serves file inline for supported formats using:
 res.sendFile(filePath);
 
-Authentication
+---
+
+## Authentication
 	•	Passport.js with Local Strategy
 	•	Session management with express-session
 	•	Users must log in to upload, view, edit, or delete their own files
 
-
+    
+    
     Got issues or ideas? Raise them — Happy to collaborate!
 
 ```
