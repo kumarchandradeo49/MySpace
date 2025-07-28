@@ -78,7 +78,7 @@ Only the file owner can perform these actions.
 1. Clone the repository
 2. Run `npm install` to install all dependencies
 3. Create `.env` file as per the setup above
-4. Run the app:
+4. Run the app
 
 ---
 
@@ -130,6 +130,7 @@ title: req.body.post_title,
 content: req.body.post_body,
 file: req.file.filename
 }
+```
 
 ---
 
@@ -154,13 +155,14 @@ View a single uploaded post
 	•	Image and PDF previews are supported inline
 	•	Other formats show “Preview not available”
 	•	Download, Edit, and Delete buttons are visible to the owner
-
+   ```js
     res.render("post", {
   title: post.title,
   content: post.content,
   file: post.file,
   postId: post._id
 });
+```
 
 ---
 
@@ -180,12 +182,14 @@ Allows users to update post info or file
 
 	•	Pre-fills the form with existing data
 	•	Submitting updates the file and redirects to /posts/:id
-
+   
+   ```js
     $set: {
   title: req.body.post_title,
   content: req.body.post_body,
   file: req.file.filename
 }
+```
 
 ---
 
@@ -198,22 +202,28 @@ Allows users to update post info or file
 - It:
   - Deletes the file from the `/uploads` folder
   - Removes the document from MongoDB
-
+  
+```js
 Post.findByIdAndDelete(req.params.postId)
+```
 
 ---
 
 ## `/uploads/download/:filename`
 
 Forces file download using:
+```js
 res.download(filePath);
+```
 
 ---
 
 ##  `/uploads/view/:filename`
 
 Serves file inline for supported formats using:
+```js
 res.sendFile(filePath);
+```
 
 ---
 
@@ -221,7 +231,6 @@ res.sendFile(filePath);
 	•	Passport.js with Local Strategy
 	•	Session management with express-session
 	•	Users must log in to upload, view, edit, or delete their own files
-
 
 
     Got issues or ideas? Raise them — Happy to collaborate!
