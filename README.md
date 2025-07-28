@@ -233,6 +233,6 @@ res.sendFile(filePath);
 	•	Users must log in to upload, view, edit, or delete their own files
 
 
-    Got issues or ideas? Raise them — Happy to collaborate!
 
-```
+   # Got issues or ideas? Raise them — Happy to collaborate!
+
