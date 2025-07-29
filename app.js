@@ -50,7 +50,6 @@ function isLoggedIn(req, res, next) {
   res.redirect('/login');
 }
 
-// Auth Routes
 
 app.get('/register', (req, res) => {
   res.render('register');
@@ -83,7 +82,6 @@ app.get('/logout', (req, res) => {
   });
 });
 
-//  File Upload Setup 
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "public/uploads/files"),
@@ -91,7 +89,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Post Schema
 
 const postSchema = new mongoose.Schema({
   title: String,
@@ -104,8 +101,7 @@ const postSchema = new mongoose.Schema({
 });
 const Post = mongoose.model("Post", postSchema);
 
-//  Routes 
-//  Public Homepage
+
 app.get("/", (req, res) => {
   if (!req.user) {
     return res.render("home", { posts: [], user: null });
@@ -116,7 +112,7 @@ app.get("/", (req, res) => {
     .catch(err => res.status(500).send(err));
 });
 
-// Compose (Only for logged-in users)
+
 app.get("/compose", isLoggedIn, (req, res) => {
   res.render("compose", { user: req.user });
 });
@@ -133,7 +129,7 @@ app.post("/compose", isLoggedIn, upload.single("uploaded_file"), (req, res) => {
     .catch(err => res.status(500).send(err));
 });
 
-// View Post (Only by the post owner)
+// View Post(Only by the post owner)
 app.get("/posts/:postId", isLoggedIn, (req, res) => {
   Post.findById(req.params.postId)
     .then(post => {
@@ -199,23 +195,23 @@ app.post("/posts/:postId/delete", isLoggedIn, (req, res) => {
     .catch(err => res.status(500).send(err));
 });
 
-//  View File in Browser
+
 app.get("/uploads/view/:filename", (req, res) => {
   const filePath = path.join(__dirname, "public/uploads/files", req.params.filename);
   fs.access(filePath, fs.constants.F_OK, (err) => {
     if (err) return res.status(404).send("File not found.");
-    res.sendFile(filePath); // Display inline
+    res.sendFile(filePath); 
   });
 });
 
-//  Download File
+
 app.get("/uploads/download/:filename", (req, res) => {
   const filePath = path.join(__dirname, "public/uploads/files", req.params.filename);
   fs.access(filePath, fs.constants.F_OK, (err) => {
     if (err) return res.status(404).send("File not found.");
-    res.download(filePath); // Force download
+    res.download(filePath); 
   });
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("🚀 Server started on port " + port));
+app.listen(port, () => console.log("server started on port " + port));
