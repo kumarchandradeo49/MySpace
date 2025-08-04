@@ -1,217 +1,174 @@
-require('dotenv').config();
+require("dotenv").config();
 
-const express = require('express');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const User = require('./models/User');
+const express = require("express");
+const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
+const session = require("express-session");
+const passport = require("passport");
+const multer = require("multer");
 
-const session = require('express-session');
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
+const User = require("./models/User");
+const { storage } = require("./cloudinary");
+const upload = multer({ storage });
 
 const app = express();
 
 
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log("✅ MongoDB Atlas connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB error:", err));
 
 
-app.set('view engine', 'ejs');
+app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-
 app.use(session({
-  secret: 'yourSecretKey',
+  secret: "yourSecretKey",
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
 }));
-
-
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-
 app.use((req, res, next) => {
   res.locals.user = req.user;
   next();
 });
 
-
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) return next();
-  res.redirect('/login');
+  res.redirect("/login");
 }
-
-
-app.get('/register', (req, res) => {
-  res.render('register');
-});
-
-app.post('/register', (req, res) => {
-  User.register(new User({ username: req.body.username }), req.body.password, (err, user) => {
-    if (err) {
-      console.log(err);
-      return res.redirect('/register');
-    }
-    passport.authenticate("local")(req, res, () => {
-      res.redirect('/');
-    });
-  });
-});
-
-app.get('/login', (req, res) => {
-  res.render('login');
-});
-
-app.post('/login', passport.authenticate("local", {
-  successRedirect: "/",
-  failureRedirect: "/login"
-}));
-
-app.get('/logout', (req, res) => {
-  req.logout(() => {
-    res.redirect('/');
-  });
-});
-
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "public/uploads/files"),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage });
 
 
 const postSchema = new mongoose.Schema({
   title: String,
   content: String,
-  file: String,
+  file: String, 
   author: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: "User"
   }
 });
 const Post = mongoose.model("Post", postSchema);
 
+// Routes
+app.get("/register", (req, res) => res.render("register"));
+
+app.post("/register", (req, res) => {
+  User.register(
+    new User({ username: req.body.username }),
+    req.body.password,
+    (err, user) => {
+      if (err) {
+        console.log(err);
+        return res.redirect("/register");
+      }
+      passport.authenticate("local")(req, res, () => res.redirect("/"));
+    }
+  );
+});
+
+app.get("/login", (req, res) => res.render("login"));
+
+app.post("/login", passport.authenticate("local", {
+  successRedirect: "/",
+  failureRedirect: "/login",
+}));
+
+app.get("/logout", (req, res) => {
+  req.logout(() => res.redirect("/"));
+});
+
 
 app.get("/", (req, res) => {
-  if (!req.user) {
-    return res.render("home", { posts: [], user: null });
-  }
+  if (!req.user) return res.render("home", { posts: [], user: null });
 
   Post.find({ author: req.user._id })
-    .then(posts => res.render("home", { posts, user: req.user }))
-    .catch(err => res.status(500).send(err));
+    .then(posts => res.render("home", { posts }))
+    .catch(err => res.status(500).send("Error loading posts"));
 });
 
 
 app.get("/compose", isLoggedIn, (req, res) => {
-  res.render("compose", { user: req.user });
+  res.render("compose");
 });
 
 app.post("/compose", isLoggedIn, upload.single("uploaded_file"), (req, res) => {
-  const post = new Post({
+  const newPost = new Post({
     title: req.body.post_title,
     content: req.body.post_body,
-    file: req.file ? req.file.filename : "",
+    file: req.file?.path || "",
     author: req.user._id
   });
-  post.save()
+
+  newPost.save()
     .then(() => res.redirect("/"))
-    .catch(err => res.status(500).send(err));
-});
-
-// View Post(Only by the post owner)
-app.get("/posts/:postId", isLoggedIn, (req, res) => {
-  Post.findById(req.params.postId)
-    .then(post => {
-      if (!post.author.equals(req.user._id)) return res.status(403).send("Forbidden");
-      res.render("post", {
-        title: post.title,
-        content: post.content,
-        file: post.file,
-        postId: post._id,
-        user: req.user
-      });
-    })
-    .catch(err => res.status(500).send(err));
-});
-
-app.get("/posts/:postId/edit", isLoggedIn, (req, res) => {
-  Post.findById(req.params.postId)
-    .then(post => {
-      if (!post.author.equals(req.user._id)) return res.status(403).send("Forbidden");
-      res.render("edit", {
-        postId: post._id,
-        title: post.title,
-        content: post.content,
-        file: post.file,
-        user: req.user
-      });
-    })
-    .catch(err => res.status(500).send(err));
-});
-
-app.post("/posts/:postId/edit", isLoggedIn, upload.single("myfile"), (req, res) => {
-  Post.findById(req.params.postId)
-    .then(post => {
-      if (!post.author.equals(req.user._id)) return res.status(403).send("Forbidden");
-
-      if (req.file && post.file) {
-        const oldFile = path.join(__dirname, "public", "uploads", "files", post.file);
-        if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
-        post.file = req.file.filename;
-      }
-
-      post.title = req.body.post_title;
-      post.content = req.body.post_body;
-      return post.save();
-    })
-    .then(() => res.redirect("/posts/" + req.params.postId))
-    .catch(err => res.status(500).send(err));
-});
-
-app.post("/posts/:postId/delete", isLoggedIn, (req, res) => {
-  Post.findById(req.params.postId)
-    .then(post => {
-      if (!post.author.equals(req.user._id)) return res.status(403).send("Forbidden");
-
-      return Post.findByIdAndDelete(req.params.postId).then(deleted => {
-        if (deleted?.file) {
-          const filePath = path.join(__dirname, "public/uploads/files", deleted.file);
-          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        }
-      });
-    })
-    .then(() => res.redirect("/"))
-    .catch(err => res.status(500).send(err));
+    .catch(err => res.status(500).send("Error saving post"));
 });
 
 
-app.get("/uploads/view/:filename", (req, res) => {
-  const filePath = path.join(__dirname, "public/uploads/files", req.params.filename);
-  fs.access(filePath, fs.constants.F_OK, (err) => {
-    if (err) return res.status(404).send("File not found.");
-    res.sendFile(filePath); 
+app.get("/posts/:postId", isLoggedIn, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.postId);
+    if (!post || !post.author.equals(req.user._id)) return res.status(403).send("Forbidden");
+
+    res.render("post", {
+      title: post.title,
+      content: post.content,
+      file: post.file,
+      postId: post._id,
+      user: req.user,
+      downloadLink: post.file // ✅ use direct Cloudinary URL for download
+    });
+
+  } catch (err) {
+    console.error("Error loading post:", err);
+    res.status(500).send("Error loading post");
+  }
+});
+
+
+app.get("/posts/:postId/edit", isLoggedIn, async (req, res) => {
+  const post = await Post.findById(req.params.postId);
+  if (!post || !post.author.equals(req.user._id)) return res.status(403).send("Forbidden");
+
+  res.render("edit", {
+    postId: post._id,
+    title: post.title,
+    content: post.content,
+    file: post.file,
+    user: req.user,
   });
 });
 
+app.post("/posts/:postId/edit", isLoggedIn, upload.single("myfile"), async (req, res) => {
+  const post = await Post.findById(req.params.postId);
+  if (!post || !post.author.equals(req.user._id)) return res.status(403).send("Forbidden");
 
-app.get("/uploads/download/:filename", (req, res) => {
-  const filePath = path.join(__dirname, "public/uploads/files", req.params.filename);
-  fs.access(filePath, fs.constants.F_OK, (err) => {
-    if (err) return res.status(404).send("File not found.");
-    res.download(filePath); 
-  });
+  if (req.file) {
+    post.file = req.file.path;
+  }
+
+  post.title = req.body.post_title;
+  post.content = req.body.post_body;
+  await post.save();
+
+  res.redirect("/posts/" + req.params.postId);
+});
+
+
+app.post("/posts/:postId/delete", isLoggedIn, async (req, res) => {
+  const post = await Post.findById(req.params.postId);
+  if (!post || !post.author.equals(req.user._id)) return res.status(403).send("Forbidden");
+
+  await Post.findByIdAndDelete(req.params.postId);
+  res.redirect("/");
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log("server started on port " + port));
+app.listen(port, () => console.log("🚀 Server running on port " + port));

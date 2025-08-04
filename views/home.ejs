@@ -23,26 +23,11 @@
               <h2 class="card-title"><%= post.title %></h2>
               <p class="card-text"><%= post.content.substring(0, 50) + "..." %></p>
 
-              <% if (post.file) { %>
-                <p class="file-name">
-                  <i class="bi bi-file-earmark-arrow-down"></i> <%= post.file %>
-                </p>
-              <% } %>
-
               <div class="open-btn-div mt-3">
                 <a class="box-a" href="/posts/<%= post._id %>">
                   <button class="btn btn-primary open-btn">OPEN</button>
                 </a>
               </div>
-
-              <% if (user) { %>
-              <div class="d-flex justify-content-center gap-2 mt-2">
-                <form action="/posts/<%= post._id %>/delete" method="POST">
-                  <button class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this post?')">Delete</button>
-                </form>
-                <a href="/posts/<%= post._id %>/edit" class="btn btn-warning btn-sm">Edit</a>
-              </div>
-              <% } %>
 
             </div>
           </div>
