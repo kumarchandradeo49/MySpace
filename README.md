@@ -9,18 +9,26 @@
 - Clean file preview for images and PDFs, and download support for all files.
 - Implemented complete CRUD operations on uploaded files.
 - RESTful routing using all HTTP methods.
+- Integrated with Cloudinary for secure and persistent cloud storage.
 
 ---
 
 ## .env Setup Instruction
 
 > Add a `.env` file in the root directory and configure it like this:
-> MONGODB_URI=your_mongodb_connection_string
-> PORT=3000
+```env
+MONGODB_URI=your_mongodb_connection_string
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+PORT=3000
+```
 
 ---
 
 ## Currently Live at [MySpace on Render](https://myspace-fbg4.onrender.com)
+
+---
 
 ## Unauthenticated Home Page
 
@@ -55,6 +63,7 @@ Only the file owner can perform these actions.
 - MongoDB Atlas
 - Passport.js (Authentication)
 - Multer (File Upload Middleware)
+- Cloudinary (Media Storage)
 
 ---
 
@@ -63,6 +72,7 @@ Only the file owner can perform these actions.
 - express
 - mongoose
 - multer
+- multer-storage-cloudinary
 - ejs
 - body-parser
 - dotenv
@@ -70,6 +80,7 @@ Only the file owner can perform these actions.
 - passport-local
 - express-session
 - bcrypt
+- cloudinary
 
 ---
 
@@ -78,7 +89,7 @@ Only the file owner can perform these actions.
 1. Clone the repository
 2. Run `npm install` to install all dependencies
 3. Create `.env` file as per the setup above
-4. Run the app
+4. Run the app using `node app.js`
 
 ---
 
@@ -118,25 +129,21 @@ Base URL: `https://myspace-fbg4.onrender.com`
   - **Description** – a short explanation of the file
   - **File** – the actual file to upload
 
-> Once submitted, the post is saved to MongoDB with the uploaded file path and redirects to the home page.
-
-- Accessible only when logged in
-- Upload form includes title, description, and file input
-- After successful upload, redirects to Home showing uploaded files
+> Once submitted, the post is saved to MongoDB with the uploaded Cloudinary file path and redirects to the home page.
 
 ```js
 {
-title: req.body.post_title,
-content: req.body.post_body,
-file: req.file.filename
+  title: req.body.post_title,
+  content: req.body.post_body,
+  file: req.file.path 
 }
 ```
 
 ---
 
-
 ## `/posts/:id` (View Page)
-![user-files](./sample_pictures/dashboard-user-files.png)
+
+![user-files](./sample_pictures/dashboard.png)
 
 > Displays a specific uploaded post (file).
 
@@ -150,13 +157,8 @@ file: req.file.filename
   - **Edit & Delete Buttons** (shown only to the file owner)
 - If the file is not viewable (e.g., `.zip`, `.docx`, etc.), a fallback message is shown.
 
-View a single uploaded post
-
-	•	Image and PDF previews are supported inline
-	•	Other formats show “Preview not available”
-	•	Download, Edit, and Delete buttons are visible to the owner
-   ```js
-    res.render("post", {
+```js
+res.render("post", {
   title: post.title,
   content: post.content,
   file: post.file,
@@ -176,63 +178,34 @@ View a single uploaded post
   - Title
   - Description
   - Replace file (optional)
-- Upon form submission, the old file (if any) is deleted, and the updated post is saved.
+- Upon form submission, the updated file is uploaded to Cloudinary.
 
-Allows users to update post info or file
-
-	•	Pre-fills the form with existing data
-	•	Submitting updates the file and redirects to /posts/:id
-   
-   ```js
-    $set: {
+```js
+await Post.findByIdAndUpdate(req.params.postId, {
   title: req.body.post_title,
   content: req.body.post_body,
-  file: req.file.filename
-}
+  file: req.file?.path || existingPost.file
+});
 ```
 
 ---
 
 ## `/posts/:id/delete` (Delete)
 
-> Permanently deletes the post and its associated file.
+> Permanently deletes the post and optionally removes the file from Cloudinary.
 
-- This route is triggered by submitting a form with method `POST`.
-- Only accessible to the **owner** of the file.
-- It:
-  - Deletes the file from the `/uploads` folder
-  - Removes the document from MongoDB
-  
 ```js
-Post.findByIdAndDelete(req.params.postId)
-```
-
----
-
-## `/uploads/download/:filename`
-
-Forces file download using:
-```js
-res.download(filePath);
-```
-
----
-
-##  `/uploads/view/:filename`
-
-Serves file inline for supported formats using:
-```js
-res.sendFile(filePath);
+await Post.findByIdAndDelete(req.params.postId);
 ```
 
 ---
 
 ## Authentication
-	•	Passport.js with Local Strategy
-	•	Session management with express-session
-	•	Users must log in to upload, view, edit, or delete their own files
 
+- Passport.js with Local Strategy
+- Session management with express-session
+- Users must log in to upload, view, edit, or delete their own files
 
+---
 
-   # Got issues or ideas? Raise them — Happy to collaborate!
-
+### Got issues or ideas? Raise them — Happy to collaborate!
