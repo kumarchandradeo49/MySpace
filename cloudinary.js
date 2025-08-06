@@ -1,3 +1,5 @@
+
+
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 
@@ -10,12 +12,18 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const isPdf = file.originalname.toLowerCase().endsWith(".pdf");
+    const ext = file.originalname.split(".").pop().toLowerCase();
+
+    let resource_type = "auto";
+    if (["pdf", "doc", "docx", "xls", "xlsx"].includes(ext)) {
+      resource_type = "raw"; 
+    }
 
     return {
       folder: "yourspace_uploads",
-      resource_type: isPdf ? "raw" : "auto", // 👈 necessary for PDFs
-      format: isPdf ? "pdf" : undefined,
+      resource_type,
+      format: ext, 
+      public_id: `${Date.now()}-${file.originalname.split('.')[0]}` 
     };
   },
 });

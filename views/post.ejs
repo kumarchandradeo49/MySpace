@@ -4,13 +4,14 @@
   <h1 class="post-h1"><%= title %></h1>
   <p class="post-desc"><%= content %></p>
 
-  <% 
+  <%
     let ext = "";
     if (typeof file === "string" && file.includes(".")) {
       ext = file.split('.').pop().toLowerCase();
     }
 
     const encodedFile = encodeURIComponent(file);
+    const flDownloadLink = file.replace('/upload/', '/upload/fl_attachment/');
   %>
 
   <div class="file-preview mt-4">
@@ -22,19 +23,28 @@
           height="600px" 
           frameborder="0"
         ></iframe>
+
       <% } else if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].includes(ext)) { %>
-        <img src="<%= file %>" alt="Image" class="preview-img" />
+        <img src="<%= file %>" alt="Image" class="preview-img img-fluid" />
+
+      <% } else if (['mp4', 'webm', 'ogg'].includes(ext)) { %>
+        <div class="ratio ratio-16x9">
+          <video controls>
+            <source src="<%= file %>" type="video/<%= ext %>" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+
       <% } else { %>
         <p>Preview not available. You can download the file below.</p>
       <% } %>
+
     <% } else { %>
       <p>No file uploaded for this post.</p>
     <% } %>
   </div>
 
-  <% if (file) { 
-    const flDownloadLink = file.replace('/upload/', '/upload/fl_attachment/');
-  %>
+  <% if (file) { %>
     <a
       href="<%= flDownloadLink %>"
       class="btn btn-success download-btn mt-3"
@@ -71,3 +81,10 @@
 </div>
 
 <%- include('partials/footer'); -%>
+
+
+
+
+
+
+   
